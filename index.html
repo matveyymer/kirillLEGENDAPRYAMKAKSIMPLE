@@ -21,6 +21,7 @@ html,body {
 }
 .start-screen {
   background:radial-gradient(circle at 50% 30%, #101a2f, #030914 70%);
+  z-index:10;
 }
 .start-btn {
   font-size:20px; padding:14px 30px;
@@ -37,27 +38,45 @@ html,body {
 h1 {
   font-size:48px; color:#ffd166; text-align:center;
   margin:0; text-shadow:0 0 20px rgba(255,209,102,0.3);
+  opacity:0; animation:fadeInText 2s ease forwards;
 }
 p {
   text-align:center; font-size:18px; line-height:1.6;
   max-width:700px; margin:20px auto; color:rgba(255,255,255,0.9);
+  opacity:0; animation:fadeInText 4s ease forwards; animation-delay:1.2s;
+}
+@keyframes fadeInText {
+  from { opacity:0; transform:translateY(20px);}
+  to { opacity:1; transform:translateY(0);}
 }
 canvas {
   position:absolute; inset:0; pointer-events:none; z-index:1;
 }
+#stars { z-index:0; }
 .wrapper {
   position:relative; z-index:5; top:45%;
   transform:translateY(-50%); text-align:center; padding:0 20px;
 }
 audio { display:none; }
+.flash {
+  position:fixed; inset:0; background:white; opacity:0;
+  pointer-events:none; transition:opacity 0.6s ease-out; z-index:15;
+}
+.flash.active { opacity:1; transition:opacity 0.3s ease-in; }
 </style>
 </head>
 <body>
+
+<!-- Вспышка -->
+<div class="flash" id="flash"></div>
 
 <!-- Стартовый экран -->
 <div class="start-screen" id="startScreen">
   <button class="start-btn" id="startBtn">Открыть поздравление 🎉</button>
 </div>
+
+<!-- Звёзды -->
+<canvas id="stars"></canvas>
 
 <!-- Основное поздравление -->
 <canvas id="fireworks"></canvas>
@@ -81,18 +100,38 @@ const startBtn=document.getElementById('startBtn');
 const startScreen=document.getElementById('startScreen');
 const mainContent=document.getElementById('mainContent');
 const music=document.getElementById('music');
+const flash=document.getElementById('flash');
 const canvas=document.getElementById('fireworks');
 const ctx=canvas.getContext('2d');
 
-let fireworksStarted=false;
-let confettiInterval=null;
-
-// размеры
+// === Размеры ===
 let cw,ch;
 function resize(){cw=canvas.width=innerWidth;ch=canvas.height=innerHeight;}
 addEventListener('resize',resize);resize();
 
-// частицы фейерверков
+// === Звёздное небо ===
+const starsCanvas=document.getElementById('stars');
+const sctx=starsCanvas.getContext('2d');
+function resizeStars(){starsCanvas.width=innerWidth;starsCanvas.height=innerHeight;}
+addEventListener('resize',resizeStars);resizeStars();
+
+let stars=[];
+for(let i=0;i<250;i++){
+  stars.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,size:Math.random()*1.5+0.5,twinkle:Math.random()*100});
+}
+function drawStars(){
+  sctx.clearRect(0,0,starsCanvas.width,starsCanvas.height);
+  for(let s of stars){
+    s.twinkle+=0.05;
+    let alpha=0.5+Math.sin(s.twinkle)*0.5;
+    sctx.fillStyle=`rgba(255,255,255,${alpha})`;
+    sctx.fillRect(s.x,s.y,s.size,s.size);
+  }
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+
+// === Фейерверки ===
 class Particle{
   constructor(x,y,vx,vy,hue,life,size){this.x=x;this.y=y;this.vx=vx;this.vy=vy;this.hue=hue;this.life=life;this.size=size;this.alpha=1;}
   update(dt){this.vy+=0.02*dt;this.x+=this.vx*dt;this.y+=this.vy*dt;this.alpha-=0.02*dt;this.life-=dt;}
@@ -127,14 +166,14 @@ function burst(x,y){
     particles.push(new Particle(x,y,Math.cos(ang)*spd,Math.sin(ang)*spd,hue,Math.random()*50+40,Math.random()*3+1));
   }
 }
-
+let fireworksStarted=false;
 function autoFire(){
   if(!fireworksStarted) return;
   burst(Math.random()*cw*0.8+cw*0.1,Math.random()*ch*0.5+ch*0.1);
   setTimeout(autoFire,Math.random()*800+800);
 }
 
-// конфетти
+// === Конфетти ===
 const confettiColors=['#ffd166','#06d6a0','#118ab2','#ef476f','#ffd6a5'];
 function createConfetti(){
   const el=document.createElement('div');
@@ -154,17 +193,19 @@ function createConfetti(){
   setTimeout(()=>el.remove(),dur);
 }
 
+// === Пуск после кнопки ===
 startBtn.addEventListener('click',()=>{
+  flash.classList.add('active');
+  setTimeout(()=>flash.classList.remove('active'),300);
   startScreen.style.opacity='0';
   setTimeout(()=>startScreen.style.display='none',1000);
   mainContent.style.opacity='1';
   mainContent.style.pointerEvents='auto';
   try{music.play();}catch(e){console.log(e);}
 
-  // запуск фейерверков и конфетти после нажатия
   fireworksStarted=true;
   autoFire();
-  confettiInterval=setInterval(createConfetti,150);
+  setInterval(createConfetti,150);
 });
 </script>
 
