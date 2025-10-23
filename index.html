@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>С Днём Рождения, Кирилл!</title>
+<style>
+  :root{
+    --bg1: #081229;
+    --bg2: #0b2540;
+    --accent: #ffd166;
+    --muted: rgba(255,255,255,0.85);
+  }
+  html,body{height:100%;margin:0;font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; background: radial-gradient(1200px 700px at 10% 10%, #07243a 0%, transparent 10%), linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--muted); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+  .stage{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:40px 20px;}
+  .card{
+    width:100%;max-width:980px;border-radius:16px;padding:36px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));backdrop-filter: blur(6px);box-shadow: 0 10px 40px rgba(0,0,0,0.6);text-align:center;position:relative;z-index:10;
+  }
+  h1{font-size:48px;margin:0 0 10px;letter-spacing:0.6px;color:var(--accent);text-shadow:0 2px 18px rgba(255,209,102,0.15);}
+  p.lead{margin:0 auto 20px;max-width:760px;font-size:18px;color:rgba(255,255,255,0.9);line-height:1.5;}
+  .poem{font-style:italic;margin-top:8px;color:rgba(255,255,255,0.92);font-size:16px;line-height:1.5;}
+  .controls{margin-top:22px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+  .btn{cursor:pointer;padding:10px 16px;border-radius:10px;border:0;background:linear-gradient(180deg,#ffffff10,#ffffff06);color:var(--muted);backdrop-filter: blur(4px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.02);font-weight:600;}
+  .btn:active{transform:translateY(1px);}
+  .btn-accent{background:linear-gradient(180deg,#ffd166,#ff9f1c);color:#081229;}
+  .small{font-size:13px;padding:8px 12px;border-radius:8px;}
+  .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.04);font-size:13px;margin-top:12px}
+  /* fireworks canvas full-screen */
+  canvas#fireworks{position:absolute;inset:0;z-index:2;pointer-events:none;}
+  /* confetti pieces */
+  .confetti-wrap{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;}
+  .balloon{
+    position:absolute;bottom:-120px;left:50%;transform:translateX(-50%);z-index:6;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.35));
+    animation: floatUp 9s ease-in infinite;
+  }
+  @keyframes floatUp{
+    0%{transform:translateX(-50%) translateY(0) rotate(-6deg)}
+    50%{transform:translateX(-50%) translateY(-14vh) rotate(6deg)}
+    100%{transform:translateX(-50%) translateY(-28vh) rotate(-6deg)}
+  }
+  footer{position:relative;margin-top:18px;color:rgba(255,255,255,0.65);font-size:13px;}
+  /* responsive */
+  @media (max-width:520px){
+    h1{font-size:32px}
+    .card{padding:20px;border-radius:12px}
+    p.lead{font-size:15px}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <canvas id="fireworks"></canvas>
+  <div class="confetti-wrap" id="confetti-wrap"></div>
+
+  <div class="card" role="main" aria-labelledby="title">
+    <h1 id="title">С Днём Рождения, Кирилл!</h1>
+    <div class="badge">День громких тостов и тихих смыслов ✨</div>
+
+    <p class="lead">
+      Пусть каждый новый день будет как чистый аккорд:
+      резкий, честный, напевный. Пусть друзья будут рядом, идеи —
+      как фейерверк над ночным небом — яркие и неожиданные.
+    </p>
+
+    <p class="poem">
+      Живи красиво и со смыслом, Кирилл — пусть сердце найдёт свою дорогу,
+      и пусть в ней всегда играют свет и смех.
+    </p>
+
+    <div class="controls" role="group" aria-label="Управление праздником">
+      <button class="btn btn-accent" id="blastBtn">Запустить фейерверки</button>
+      <button class="btn" id="confettiBtn">Включить конфетти</button>
+      <button class="btn small" id="musicBtn">Включить музыку</button>
+      <button class="btn small" id="shareBtn">Сохранить как PNG</button>
+    </div>
+
+    <footer>
+      Откройте эту страницу на любом устройстве — пусть поздравление летит к Кириллу, как мантра удачи.
+    </footer>
+  </div>
+
+  <!-- decorative balloon -->
+  <svg class="balloon" width="120" height="180" viewBox="0 0 120 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="60" cy="60" rx="50" ry="64" fill="#ff9f1c" opacity="0.95"/>
+    <path d="M60 122c6 8 24 8 30 20H30c6-12 24-12 30-20z" fill="#cc7a16" opacity="0.9"/>
+    <line x1="60" y1="132" x2="60" y2="170" stroke="#fff5e6" stroke-opacity="0.2"/>
+  </svg>
+</div>
+
+<script>
+/* ========== Utilities ========== */
+function rand(min,max){return Math.random()*(max-min)+min}
+function int(min,max){return Math.floor(rand(min,max+1))}
+
+/* ========== Fireworks (canvas) ========== */
+const canvas = document
