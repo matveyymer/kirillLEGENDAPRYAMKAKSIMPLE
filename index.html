@@ -10,8 +10,8 @@ html,body {
   background:#030914;
   overflow:hidden;
   color:white;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  -webkit-font-smoothing: antialiased;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+  -webkit-font-smoothing:antialiased;
 }
 .start-screen, .main-content {
   position:absolute; inset:0;
@@ -35,32 +35,24 @@ html,body {
 .main-content {
   opacity:0; pointer-events:none;
 }
-.lyrics {
-  position:relative;
-  overflow:hidden;
-  height:60%;
-  width:80%;
-  text-align:center;
-  font-size:22px;
-  line-height:1.8;
-  color:rgba(255,255,255,0.6);
-  margin-top:5%;
+h1 {
+  font-size:48px; color:#ffd166; text-align:center;
+  margin:0; text-shadow:0 0 20px rgba(255,209,102,0.3);
+  opacity:0; animation:fadeInText 2s ease forwards;
 }
-.line {
-  opacity:0.2;
-  transform:translateY(40px);
-  transition:all 1.2s ease;
+p {
+  text-align:center; font-size:18px; line-height:1.6;
+  max-width:700px; margin:20px auto; color:rgba(255,255,255,0.9);
+  opacity:0; animation:fadeInText 4s ease forwards; animation-delay:1.2s;
 }
-.line.active {
-  opacity:1;
-  color:#ffd166;
-  text-shadow:0 0 25px rgba(255,209,102,0.5), 0 0 40px rgba(239,71,111,0.3);
-  transform:translateY(0);
-  animation:pulse 3s ease-in-out infinite;
+@keyframes fadeInText {
+  from { opacity:0; transform:translateY(20px);}
+  to { opacity:1; transform:translateY(0);}
 }
 @keyframes pulse {
   0%, 100% {
     text-shadow: 0 0 25px rgba(255,209,102,0.3);
+    transform:scale(1);
     color: #ffd166;
   }
   25% {
@@ -69,6 +61,7 @@ html,body {
   }
   50% {
     text-shadow: 0 0 55px rgba(255,255,255,0.8);
+    transform:scale(1.05);
     color: #ffe3a3;
   }
   75% {
@@ -76,15 +69,16 @@ html,body {
     color: #ffd166;
   }
 }
+h1.pulse {
+  animation:fadeInText 2s ease forwards, pulse 3.2s ease-in-out infinite;
+}
 canvas {
   position:absolute; inset:0; pointer-events:none; z-index:1;
 }
 #stars { z-index:0; }
 .wrapper {
-  position:relative; z-index:5;
-  width:100%; height:100%;
-  display:flex; align-items:center; justify-content:center;
-  flex-direction:column;
+  position:relative; z-index:5; top:45%;
+  transform:translateY(-50%); text-align:center; padding:0 20px;
 }
 audio { display:none; }
 .flash {
@@ -101,28 +95,22 @@ audio { display:none; }
 
 <!-- Стартовый экран -->
 <div class="start-screen" id="startScreen">
-  <button class="start-btn" id="startBtn">Открыть поздравление 🎧</button>
+  <button class="start-btn" id="startBtn">Открыть поздравление 🎉</button>
 </div>
 
 <!-- Звёзды -->
 <canvas id="stars"></canvas>
 
-<!-- Фейерверки -->
+<!-- Основное поздравление -->
 <canvas id="fireworks"></canvas>
-
-<!-- Основное содержимое -->
 <div class="main-content" id="mainContent">
   <div class="wrapper">
-    <div class="lyrics" id="lyrics">
-      <div class="line">С Днём Рождения, Кирилл!</div>
-      <div class="line">Сегодня музыка принадлежит тебе.</div>
-      <div class="line">Каждая нота — твоя мысль,</div>
-      <div class="line">каждый ритм — твоя энергия.</div>
-      <div class="line">Живи громко, мечтай смело,</div>
-      <div class="line">и пусть мир подпевает тебе.</div>
-      <div class="line">Ты — трек, что звучит только вверх.</div>
-      <div class="line">С праздником, брат!</div>
-    </div>
+    <h1 id="title">С Днём Рождения, Кирилл!</h1>
+    <p>
+      Пусть каждый новый день звучит, как чистый аккорд счастья — громкий, честный и настоящий.<br>
+      Живи ярко, думай смело, мечтай громко.<br>
+      Твоя жизнь — это музыка, Кирилл.
+    </p>
   </div>
 </div>
 
@@ -131,22 +119,21 @@ audio { display:none; }
 </audio>
 
 <script>
-// === Основные элементы ===
 const startBtn=document.getElementById('startBtn');
 const startScreen=document.getElementById('startScreen');
 const mainContent=document.getElementById('mainContent');
-const flash=document.getElementById('flash');
 const music=document.getElementById('music');
-const lines=document.querySelectorAll('.line');
-
-// === Размеры ===
+const flash=document.getElementById('flash');
+const title=document.getElementById('title');
 const canvas=document.getElementById('fireworks');
 const ctx=canvas.getContext('2d');
+
+// === Размеры ===
 let cw,ch;
 function resize(){cw=canvas.width=innerWidth;ch=canvas.height=innerHeight;}
 addEventListener('resize',resize);resize();
 
-// === Звёзды ===
+// === Звёздное небо ===
 const starsCanvas=document.getElementById('stars');
 const sctx=starsCanvas.getContext('2d');
 function resizeStars(){starsCanvas.width=innerWidth;starsCanvas.height=innerHeight;}
@@ -210,22 +197,27 @@ function autoFire(){
   setTimeout(autoFire,Math.random()*800+800);
 }
 
-// === Лирикс-анимация ===
-function animateLyrics() {
-  let i = 0;
-  function nextLine() {
-    if (i > 0) lines[i-1].classList.remove('active');
-    if (i < lines.length) {
-      lines[i].classList.add('active');
-      lines[i].scrollIntoView({behavior: "smooth", block: "center"});
-      i++;
-      setTimeout(nextLine, 4000); // скорость смены строк
-    }
-  }
-  nextLine();
+// === Конфетти ===
+const confettiColors=['#ffd166','#06d6a0','#118ab2','#ef476f','#ffd6a5'];
+function createConfetti(){
+  const el=document.createElement('div');
+  const size=Math.floor(Math.random()*6+8);
+  el.style.position='fixed';
+  el.style.left=Math.floor(Math.random()*100)+'%';
+  el.style.top='-20px';
+  el.style.width=size+'px';
+  el.style.height=size*1.4+'px';
+  el.style.background=confettiColors[Math.floor(Math.random()*confettiColors.length)];
+  el.style.opacity=Math.random()*0.8+0.2;
+  el.style.transform='rotate('+Math.floor(Math.random()*360)+'deg)';
+  el.style.zIndex='10';
+  document.body.appendChild(el);
+  const dur=Math.random()*4000+5000;
+  el.animate([{transform:`translateY(0)`},{transform:`translateY(${innerHeight+50}px)`}],{duration:dur,easing:'linear'});
+  setTimeout(()=>el.remove(),dur);
 }
 
-// === Пуск ===
+// === Пуск после кнопки ===
 startBtn.addEventListener('click',()=>{
   flash.classList.add('active');
   setTimeout(()=>flash.classList.remove('active'),300);
@@ -237,7 +229,8 @@ startBtn.addEventListener('click',()=>{
 
   fireworksStarted=true;
   autoFire();
-  animateLyrics();
+  setInterval(createConfetti,150);
+  title.classList.add('pulse');
 });
 </script>
 
