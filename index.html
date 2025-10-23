@@ -25,9 +25,7 @@
   .btn-accent{background:linear-gradient(180deg,#ffd166,#ff9f1c);color:#081229;}
   .small{font-size:13px;padding:8px 12px;border-radius:8px;}
   .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.04);font-size:13px;margin-top:12px}
-  /* fireworks canvas full-screen */
   canvas#fireworks{position:absolute;inset:0;z-index:2;pointer-events:none;}
-  /* confetti pieces */
   .confetti-wrap{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;}
   .balloon{
     position:absolute;bottom:-120px;left:50%;transform:translateX(-50%);z-index:6;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.35));
@@ -39,7 +37,6 @@
     100%{transform:translateX(-50%) translateY(-28vh) rotate(-6deg)}
   }
   footer{position:relative;margin-top:18px;color:rgba(255,255,255,0.65);font-size:13px;}
-  /* responsive */
   @media (max-width:520px){
     h1{font-size:32px}
     .card{padding:20px;border-radius:12px}
@@ -70,16 +67,25 @@
     <div class="controls" role="group" aria-label="Управление праздником">
       <button class="btn btn-accent" id="blastBtn">Запустить фейерверки</button>
       <button class="btn" id="confettiBtn">Включить конфетти</button>
-      <button class="btn small" id="musicBtn">Включить музыку</button>
       <button class="btn small" id="shareBtn">Сохранить как PNG</button>
     </div>
 
+    <!-- 🎶 Музыкальный плеер -->
+    <div style="margin-top:20px; text-align:center;">
+      <audio id="music" controls loop style="width:80%; max-width:400px;">
+        <source src="smokedope_foamposite_interlude.mp3.m4a" type="audio/mp4">
+        Твой браузер не поддерживает воспроизведение аудио.
+      </audio>
+      <p style="font-size:13px; opacity:0.8; margin-top:6px;">
+        Музыка: Smokedope — Foamposite Interlude 🎧
+      </p>
+    </div>
+
     <footer>
-      Откройте эту страницу на любом устройстве — пусть поздравление летит к Кириллу, как мантра удачи.
+      Открой страницу на любом устройстве — пусть поздравление летит к Кириллу, как мантра удачи.
     </footer>
   </div>
 
-  <!-- decorative balloon -->
   <svg class="balloon" width="120" height="180" viewBox="0 0 120 180" fill="none" xmlns="http://www.w3.org/2000/svg">
     <ellipse cx="60" cy="60" rx="50" ry="64" fill="#ff9f1c" opacity="0.95"/>
     <path d="M60 122c6 8 24 8 30 20H30c6-12 24-12 30-20z" fill="#cc7a16" opacity="0.9"/>
@@ -88,9 +94,74 @@
 </div>
 
 <script>
-/* ========== Utilities ========== */
 function rand(min,max){return Math.random()*(max-min)+min}
 function int(min,max){return Math.floor(rand(min,max+1))}
-
-/* ========== Fireworks (canvas) ========== */
-const canvas = document
+const canvas=document.getElementById('fireworks');
+const ctx=canvas.getContext('2d');
+let cw,ch;
+function resize(){cw=canvas.width=innerWidth;ch=canvas.height=innerHeight;}
+addEventListener('resize',resize);resize();
+class Particle{
+  constructor(x,y,vx,vy,hue,life,size){this.x=x;this.y=y;this.vx=vx;this.vy=vy;this.hue=hue;this.life=life;this.size=size;this.alpha=1;}
+  update(dt){this.vy+=0.02*dt;this.x+=this.vx*dt;this.y+=this.vy*dt;this.alpha-=0.02*dt;this.life-=dt;}
+  draw(){ctx.beginPath();ctx.globalCompositeOperation='lighter';
+    const g=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.size*4);
+    g.addColorStop(0,`hsla(${this.hue},100%,65%,${Math.max(this.alpha,0)})`);
+    g.addColorStop(0.4,`hsla(${this.hue},100%,55%,${Math.max(this.alpha-0.15,0)})`);
+    g.addColorStop(1,`hsla(${this.hue},60%,30%,0)`);
+    ctx.fillStyle=g;ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fill();}
+}
+let particles=[];let last=performance.now();
+function loop(now){const dt=Math.min((now-last)/16,4);last=now;ctx.clearRect(0,0,cw,ch);ctx.fillStyle='rgba(5,8,15,0.18)';ctx.fillRect(0,0,cw,ch);
+  for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.update(dt);if(p.life<=0||p.alpha<=0){particles.splice(i,1);continue;}p.draw();}
+  requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+function burst(x,y,hue,count=80){
+  for(let i=0;i<count;i++){
+    const ang=rand(0,Math.PI*2);const spd=rand(1,6);
+    const vx=Math.cos(ang)*spd;const vy=Math.sin(ang)*spd;
+    const size=rand(1.2,4.5);const life=rand(30,70);
+    particles.push(new Particle(x,y,vx,vy,hue,life,size));
+  }
+}
+document.getElementById('blastBtn').addEventListener('click',()=>{
+  for(let i=0;i<7;i++){
+    setTimeout(()=>{
+      const x=rand(cw*0.12,cw*0.88);const y=rand(ch*0.08,ch*0.45);
+      const hue=int(rand(0,360));
+      burst(x,y,hue,int(60,120));
+    },i*160);
+  }
+});
+const confettiWrap=document.getElementById('confetti-wrap');
+let confettiOn=false;
+function makeConfetti(){
+  const colors=['#ffd166','#06d6a0','#118ab2','#ef476f','#ffd6a5'];
+  const el=document.createElement('div');
+  const w=int(7,14),h=int(10,18);
+  el.style.width=w+'px';el.style.height=h+'px';el.style.position='absolute';
+  el.style.left=int(2,98)+'%';el.style.top='-10%';
+  el.style.background=colors[int(0,colors.length-1)];
+  el.style.transform='rotate('+int(0,360)+'deg)';
+  el.style.opacity=(rand(0.8,1)).toString();
+  el.style.borderRadius=(int(0,50))+'%';el.style.zIndex=6;
+  confettiWrap.appendChild(el);
+  const dur=rand(3000,7000);const sway=rand(-60,60);
+  el.animate([{transform:`translateY(0) rotate(${int(0,360)}deg)`},{transform:`translate(${sway}px, ${innerHeight+40}px) rotate(${int(360,720)}deg)`}],{duration:dur,easing:'cubic-bezier(.2,.7,.2,1)'});
+  setTimeout(()=>el.remove(),dur+100);
+}
+let confettiTimer=null;
+document.getElementById('confettiBtn').addEventListener('click',()=>{
+  confettiOn=!confettiOn;
+  document.getElementById('confettiBtn').textContent=confettiOn?'Отключить конфетти':'Включить конфетти';
+  if(confettiOn){confettiTimer=setInterval(makeConfetti,120);}else{clearInterval(confettiTimer);confettiTimer=null;}
+});
+canvas.addEventListener('click',(e)=>{
+  const rect=canvas.getBoundingClientRect();
+  const x=e.clientX-rect.left;const y=e.clientY-rect.top;
+  const hue=int(0,360);
+  burst(x,y,hue,int(70,140));
+});
+</script>
+</body>
+</html>
