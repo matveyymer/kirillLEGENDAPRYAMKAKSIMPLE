@@ -7,10 +7,32 @@
 <style>
 html,body {
   margin:0; padding:0; height:100%;
-  background: radial-gradient(1200px 700px at 10% 10%, #07243a 0%, transparent 10%), linear-gradient(180deg,#081229,#0b2540);
+  background:#030914;
   overflow:hidden;
-  color:white; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+  color:white;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;
   -webkit-font-smoothing:antialiased;
+}
+.start-screen, .main-content {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  transition:opacity 1s ease;
+}
+.start-screen {
+  background:radial-gradient(circle at 50% 30%, #101a2f, #030914 70%);
+}
+.start-btn {
+  font-size:20px; padding:14px 30px;
+  border:none; border-radius:30px;
+  background:linear-gradient(135deg,#ffd166,#ef476f);
+  color:#000; font-weight:600;
+  cursor:pointer; box-shadow:0 0 20px rgba(255,209,102,0.4);
+  transition:transform 0.2s,box-shadow 0.3s;
+}
+.start-btn:hover { transform:scale(1.05); box-shadow:0 0 25px rgba(239,71,111,0.7); }
+.main-content {
+  opacity:0; pointer-events:none;
 }
 h1 {
   font-size:48px; color:#ffd166; text-align:center;
@@ -31,21 +53,44 @@ audio { display:none; }
 </style>
 </head>
 <body>
-<canvas id="fireworks"></canvas>
-<div class="wrapper">
-  <h1>С Днём Рождения, Кирилл!</h1>
-  <p>
-    Пусть каждый новый день звучит, как чистый аккорд счастья — громкий, честный и настоящий.<br>
-    Живи ярко, думай смело, мечтай громко.<br>
-    Твоя жизнь — это музыка, Кирилл.
-  </p>
+
+<!-- Стартовый экран -->
+<div class="start-screen" id="startScreen">
+  <button class="start-btn" id="startBtn">Открыть поздравление 🎉</button>
 </div>
 
-<audio id="music" loop autoplay>
+<!-- Основное поздравление -->
+<canvas id="fireworks"></canvas>
+<div class="main-content" id="mainContent">
+  <div class="wrapper">
+    <h1>С Днём Рождения, Кирилл!</h1>
+    <p>
+      Пусть каждый новый день звучит, как чистый аккорд счастья — громкий, честный и настоящий.<br>
+      Живи ярко, думай смело, мечтай громко.<br>
+      Твоя жизнь — это музыка, Кирилл.
+    </p>
+  </div>
+</div>
+
+<audio id="music" loop>
   <source src="smokedope_foamposite_interlude.mp3.m4a" type="audio/mp4">
 </audio>
 
 <script>
+const startBtn=document.getElementById('startBtn');
+const startScreen=document.getElementById('startScreen');
+const mainContent=document.getElementById('mainContent');
+const music=document.getElementById('music');
+
+startBtn.addEventListener('click',()=>{
+  startScreen.style.opacity='0';
+  setTimeout(()=>startScreen.style.display='none',1000);
+  mainContent.style.opacity='1';
+  mainContent.style.pointerEvents='auto';
+  try{music.play();}catch(e){console.log(e);}
+});
+
+// --- Фейерверки и конфетти ---
 function rand(min,max){return Math.random()*(max-min)+min}
 function int(min,max){return Math.floor(rand(min,max+1))}
 const canvas=document.getElementById('fireworks');
@@ -109,5 +154,6 @@ function createConfetti(){
 }
 setInterval(createConfetti,120);
 </script>
+
 </body>
 </html>
